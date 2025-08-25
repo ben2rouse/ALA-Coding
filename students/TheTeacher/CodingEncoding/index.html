@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cipher Lab — Encode / Decode</title>
+<meta name="description" content="Simple encoding/decoding tool for Caesar, ROT13, Atbash, Vigenère, and Base64." />
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121a24; --muted:#9fb0c6; --text:#e6edf3; --border:#1c2a3b;
+    --accent:#5cc8ff; --accent-2:#27d980; --danger:#ff6b6b; --chip:#1a2533;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans";
+    background:radial-gradient(1100px 700px at 20% -10%, #102033 0%, #0b0f14 40%) , radial-gradient(900px 700px at 120% 0%, #14253c 0%, #0b0f14 50%);
+    color:var(--text);
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:24px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  h1{margin:0;font-size:26px}
+  .sub{color:var(--muted);font-size:14px}
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    border:1px solid var(--border); border-radius:16px; padding:16px;
+  }
+  .controls{display:grid;grid-template-columns:1fr;gap:12px}
+  @media (min-width:900px){ .controls{grid-template-columns: 1.2fr .8fr .8fr auto} }
+  select, input[type="text"], input[type="number"]{
+    width:100%; padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1722;color:var(--text)
+  }
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{background:var(--chip);border:1px solid var(--border);padding:4px 8px;border-radius:10px;color:var(--muted);font-size:12px}
+  .area-wrap{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+  @media (min-width:900px){ .area-wrap{grid-template-columns:1fr 1fr} }
+  textarea{
+    width:100%;min-height:220px;resize:vertical;padding:12px;border-radius:14px;border:1px solid var(--border);
+    background:#0f1622;color:var(--text);font-size:14px;line-height:1.5
+  }
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{
+    border:1px solid var(--border);background:#172236;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:700
+  }
+  button.primary{background:var(--accent);border-color:transparent;color:#002233}
+  button.good{background:var(--accent-2);border-color:transparent;color:#002a12}
+  button.danger{background:var(--danger);border-color:transparent;color:white}
+  .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hide{display:none}
+  .bf{
+    margin-top:14px;padding:12px;border-radius:14px;border:1px solid var(--border);background:#0f1622
+  }
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border-bottom:1px solid var(--border);padding:8px 6px;vertical-align:top}
+  th{color:var(--muted);font-weight:600;text-align:left}
+  .footer{margin-top:18px;color:var(--muted);font-size:12px}
+  .error{color:var(--danger);font-size:12px;margin-top:6px}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;background:#0f1622;border:1px solid var(--border);padding:2px 6px;border-radius:8px}
+
+  /* Callout boxes for examples/explanations */
+    .box{border:1px solid #1c2a3b;background:#0f1622;border-radius:12px;padding:12px;margin:10px 0}
+    .box h4{margin:0 0 6px 0;font-size:14px;color:#9fb0c6}
+    .box code{background:#0b1220;border:1px solid #1c2a3b;border-radius:6px;padding:1px 4px}
+    .box .mono{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🔐 Cipher Lab</h1>
+        <div class="sub">Encode / Decode: Caesar · ROT13 · Atbash · Vigenère · Base64</div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="controls">
+        <div class="inline" style="gap:10px;flex-wrap:wrap">
+          <label for="cipher">Cipher</label>
+          <select id="cipher">
+            <option value="caesar">Caesar</option>
+            <option value="rot13">ROT13</option>
+            <option value="atbash">Atbash</option>
+            <option value="vigenere">Vigenère</option>
+            <option value="base64">Base64</option>
+          </select>
+        </div>
+
+        <div class="inline" id="caesarControls">
+          <label for="shift">Shift</label>
+          <input id="shift" type="number" value="3" min="-25" max="25" />
+          <button id="bfBtn" type="button">Brute-force (Caesar)</button>
+        </div>
+
+        <div class="inline hide" id="vigControls">
+          <label for="vigKey">Key</label>
+          <input id="vigKey" type="text" placeholder="letters only (e.g., lemon)" />
+        </div>
+
+        <div class="inline">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="encode">Encode</option>
+            <option value="decode">Decode</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="area-wrap">
+        <div>
+          <label>Input</label>
+          <textarea id="input" placeholder="Type or paste text here…"></textarea>
+          <div class="hint">Punctuation and spaces are preserved for classical ciphers.</div>
+          <div class="error" id="err"></div>
+        </div>
+        <div>
+          <label>Output</label>
+          <textarea id="output" readonly placeholder="Result will appear here…"></textarea>
+          <div class="btns">
+            <button class="primary" id="runBtn" type="button">Run</button>
+            <button class="good" id="copyBtn" type="button">Copy Output</button>
+            <button id="swapBtn" type="button">Swap</button>
+            <button class="danger" id="clearBtn" type="button">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bf hide" id="bfWrap">
+        <div class="inline" style="justify-content:space-between;width:100%">
+          <strong>Caesar Brute-force (shift 0–25)</strong>
+          <button id="closeBf" type="button">Close</button>
+        </div>
+        <table id="bfTable">
+          <thead><tr><th>Shift</th><th>Decoded</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <br>
+              <section class="panel" style="margin-top:20px">
+            <h2>ℹ️ About This Cipher</h2>
+            <div id="cipherInfo">
+                <p>Select a cipher above to see its explanation and history.</p>
+            </div>
+        </section>
+        <br>
+
+      <div class="footer">Tip: highlight text and press <span class="kbd">Ctrl/Cmd + C</span> to copy.</div>
+    </section>
+  </div>
+
+<script>
+/* ==== Utility: alpha helpers ==== */
+const A_CODE = "A".charCodeAt(0), Z_CODE = "Z".charCodeAt(0);
+const a_CODE = "a".charCodeAt(0), z_CODE = "z".charCodeAt(0);
+
+function isLetter(ch){
+  const c = ch.charCodeAt(0);
+  return (c>=A_CODE && c<=Z_CODE) || (c>=a_CODE && c<=z_CODE);
+}
+function shiftChar(ch, n){
+  const code = ch.charCodeAt(0), isUpper = (code>=A_CODE && code<=Z_CODE);
+  const start = isUpper ? A_CODE : a_CODE;
+  const end   = isUpper ? Z_CODE : z_CODE;
+  if(code<start || code>end) return ch;
+  const span = 26;
+  let idx = code - start;
+  idx = (idx + (n%span) + span) % span;
+  return String.fromCharCode(start + idx);
+}
+function cleanKey(key){
+  return (key||"").replace(/[^A-Za-z]/g,"");
+}
+
+/* ==== Ciphers ==== */
+function caesar(str, shift){
+  return [...str].map(ch => isLetter(ch) ? shiftChar(ch, shift) : ch).join("");
+}
+function rot13(str){ return caesar(str, 13); }
+function atbash(str){
+  return [...str].map(ch=>{
+    if(!isLetter(ch)) return ch;
+    const isUpper = ch >= "A" && ch <= "Z";
+    const base = isUpper ? A_CODE : a_CODE;
+    const pos = ch.charCodeAt(0) - base;      // 0..25
+    const mapped = 25 - pos;                  // mirror
+    return String.fromCharCode(base + mapped);
+  }).join("");
+}
+function vigenereEncode(str, key){
+  const k = cleanKey(key);
+  if(!k) throw new Error("Vigenère key is required (letters only).");
+  let j = 0;
+  return [...str].map(ch=>{
+    if(!isLetter(ch)) return ch;
+    const kShift = (k[j % k.length].toLowerCase().charCodeAt(0) - a_CODE);
+    j++;
+    return shiftChar(ch, kShift);
+  }).join("");
+}
+function vigenereDecode(str, key){
+  const k = cleanKey(key);
+  if(!k) throw new Error("Vigenère key is required (letters only).");
+  let j = 0;
+  return [...str].map(ch=>{
+    if(!isLetter(ch)) return ch;
+    const kShift = (k[j % k.length].toLowerCase().charCodeAt(0) - a_CODE);
+    j++;
+    return shiftChar(ch, -kShift);
+  }).join("");
+}
+// Base64 with UTF-8 support
+function base64EncodeUtf8(str){
+  const bytes = new TextEncoder().encode(str);
+  let binary = ""; bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+function base64DecodeUtf8(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array([...bin].map(ch => ch.charCodeAt(0)));
+  return new TextDecoder().decode(bytes);
+}
+
+/* ==== UI wires ==== */
+const cipherSel = document.getElementById("cipher");
+const modeSel   = document.getElementById("mode");
+const inputEl   = document.getElementById("input");
+const outputEl  = document.getElementById("output");
+const shiftEl   = document.getElementById("shift");
+const vigKeyEl  = document.getElementById("vigKey");
+const errEl     = document.getElementById("err");
+
+const caesarControls = document.getElementById("caesarControls");
+const vigControls    = document.getElementById("vigControls");
+
+const runBtn  = document.getElementById("runBtn");
+const copyBtn = document.getElementById("copyBtn");
+const swapBtn = document.getElementById("swapBtn");
+const clearBtn= document.getElementById("clearBtn");
+
+const bfBtn   = document.getElementById("bfBtn");
+const bfWrap  = document.getElementById("bfWrap");
+const bfTable = document.getElementById("bfTable").querySelector("tbody");
+const closeBf = document.getElementById("closeBf");
+
+function updateControls(){
+  const c = cipherSel.value;
+  caesarControls.classList.toggle("hide", c !== "caesar");
+  vigControls.classList.toggle("hide", c !== "vigenere");
+  errEl.textContent = "";
+}
+cipherSel.addEventListener("change", updateControls);
+updateControls();
+
+function run(){
+  errEl.textContent = "";
+  const text = inputEl.value ?? "";
+  const c = cipherSel.value;
+  const mode = modeSel.value;
+  try{
+    let out = "";
+    if(c==="caesar"){
+      const s = parseInt(shiftEl.value || "0", 10) || 0;
+      out = (mode==="encode") ? caesar(text, s) : caesar(text, -s);
+    }else if(c==="rot13"){
+      out = rot13(text); // same both ways
+    }else if(c==="atbash"){
+      out = atbash(text); // symmetric
+    }else if(c==="vigenere"){
+      const key = vigKeyEl.value;
+      out = (mode==="encode") ? vigenereEncode(text, key) : vigenereDecode(text, key);
+    }else if(c==="base64"){
+      out = (mode==="encode") ? base64EncodeUtf8(text) : base64DecodeUtf8(text.trim());
+    }
+    outputEl.value = out;
+  }catch(e){
+    errEl.textContent = e.message || String(e);
+  }
+}
+runBtn.addEventListener("click", run);
+[inputEl, shiftEl, vigKeyEl, cipherSel, modeSel].forEach(el => el.addEventListener("input", run));
+
+copyBtn.addEventListener("click", async ()=>{
+  try{
+    await navigator.clipboard.writeText(outputEl.value || "");
+    copyBtn.textContent = "Copied!";
+    setTimeout(()=> copyBtn.textContent = "Copy Output", 900);
+  }catch{ /* ignore */ }
+});
+swapBtn.addEventListener("click", ()=>{
+  const a = inputEl.value; const b = outputEl.value;
+  inputEl.value = b; outputEl.value = a;
+});
+clearBtn.addEventListener("click", ()=>{
+  inputEl.value = ""; outputEl.value = ""; errEl.textContent = "";
+});
+
+/* Brute-force Caesar (for unknown shift) */
+bfBtn.addEventListener("click", ()=>{
+  bfWrap.classList.remove("hide");
+  const text = inputEl.value ?? "";
+  bfTable.innerHTML = "";
+  for(let s=0; s<26; s++){
+    const tr = document.createElement("tr");
+    const tdS = document.createElement("td"); tdS.textContent = s;
+    const tdT = document.createElement("td"); tdT.textContent = caesar(text, -s);
+    tr.appendChild(tdS); tr.appendChild(tdT);
+    bfTable.appendChild(tr);
+  }
+});
+closeBf.addEventListener("click", ()=> bfWrap.classList.add("hide"));
+
+// Run once for demo
+inputEl.value = "Attack at dawn!";
+run();
+
+const cipherInfo = document.getElementById("cipherInfo");
+
+const INFO = {
+  caesar: {
+    title: "Caesar Cipher",
+    body: `
+<p>The Caesar cipher shifts each alphabetic letter forward or backward by a fixed amount. Everything else—spaces, punctuation, numbers—stays the same. If you know the shift, encoding and decoding are just opposite directions of the same move. Think of the alphabet as a circle: when you step past <i>Z</i>, you wrap around to <i>A</i>.</p>
+
+<div class="box">
+  <h4>Example (shift = 3)</h4>
+  <div class="mono">HELLO WORLD → KHOOR ZRUOG</div>
+  <p>H→K, E→H, L→O, O→R; similarly W→Z, O→R, etc. To decode, shift by −3.</p>
+</div>
+
+<p>Mathematically, map A=0,…,Z=25. For a plaintext letter with index <code>x</code> and a key (shift) <code>n</code>, the encoded letter is <code>(x + n) mod 26</code>. Decoding uses <code>(x − n) mod 26</code>. Because there are only 26 possibilities, a brute-force table can try all shifts quickly.</p>
+
+<div class="box">
+  <h4>Try it</h4>
+  <p>Encode <span class="mono">MEET AT NOON</span> with shift=5. Then decode your result by shifting −5. You should get the original message back.</p>
+</div>
+
+<p>Historically, Julius Caesar is said to have used a shift of 3 to protect military messages in ancient Rome. It provided basic secrecy against casual readers, but it is trivial to break today—letter frequencies don’t change (E is still common), and brute-forcing 26 keys is instant for computers.</p>
+`
+  },
+
+  rot13: {
+    title: "ROT13",
+    body: `
+<p>ROT13 is a special case of the Caesar cipher where the shift is always 13. Because 13 is half the alphabet, applying ROT13 twice returns the original text. That makes it a playful way to hide content without any secret key at all.</p>
+
+<div class="box">
+  <h4>Example</h4>
+  <div class="mono">HELLO → URYYB → HELLO</div>
+  <p>One pass “scrambles,” a second pass “unscrambles.”</p>
+</div>
+
+<p>On early internet forums and mailing lists, ROT13 was used to obscure spoilers or crude jokes from casual readers. It was never real security—just a courtesy layer—so it’s best thought of as <i>obfuscation</i> rather than encryption.</p>
+`
+  },
+
+  atbash: {
+    title: "Atbash",
+    body: `
+<p>Atbash mirrors the alphabet: the first letter maps to the last, the second to the second-last, and so on (A↔Z, B↔Y, …). The mapping is fixed and doesn’t use a secret key. Upper/lowercase are preserved; non-letters pass through unchanged.</p>
+
+<div class="box">
+  <h4>Example</h4>
+  <div class="mono">HELLO → SVOOL</div>
+  <p>H↔S, E↔V, L↔O, L↔O, O↔L.</p>
+</div>
+
+<p>Atbash appears in studies of ancient Hebrew texts (famously referenced in the Book of Jeremiah). It’s historically interesting and useful for learning about substitution ciphers, but offers no meaningful secrecy by itself.</p>
+
+<div class="box">
+  <h4>Try it</h4>
+  <p>Encode your first name using Atbash. Can a classmate reverse it without using the tool?</p>
+</div>
+`
+  },
+
+  vigenere: {
+    title: "Vigenère Cipher",
+    body: `
+<p>The Vigenère cipher improves on Caesar by changing the shift for each letter, controlled by a repeating keyword. This makes it <i>polyalphabetic</i>—letter frequencies smear out, so simple frequency analysis is less effective. With a good, long key, it frustrated codebreakers for centuries.</p>
+
+<div class="box">
+  <h4>How to encode (by hand)</h4>
+  <ol>
+    <li>Choose a letter-only key, e.g., <code>LEMON</code>.</li>
+    <li>Repeat the key under the message until it matches in length.</li>
+    <li>For each position, shift the plaintext letter by the amount for the matching key letter (A=0 … Z=25).</li>
+  </ol>
+  <div class="mono">
+    Plain:  ATTACKATDAWN<br>
+    Key:    LEMONLEMONLE<br>
+    Cipher: LXFOPVEFRNHR
+  </div>
+</div>
+
+<p>Decoding reverses the process: subtract the key’s shift for each position. The challenge, historically, was discovering the key length and then solving the set of Caesar ciphers hidden inside. In the 1800s, techniques like the Kasiski examination and Friedman’s index of coincidence broke Vigenère by detecting repetition patterns.</p>
+
+<div class="box">
+  <h4>Tips & reality check</h4>
+  <ul>
+    <li>Long, non-dictionary keys make attacks harder.</li>
+    <li>Despite its fame, Vigenère is not secure against modern computers. Today we use cryptography like AES and public-key systems (RSA, ECC).</li>
+  </ul>
+</div>
+`
+  },
+
+  base64: {
+    title: "Base64 Encoding",
+    body: `
+<p>Base64 is not an encryption method—it’s a way to represent any binary data using only 64 safe text characters (A–Z, a–z, 0–9, +, /). It’s useful when you need to include bytes in places that only handle text, like emails, JSON, or HTML attributes. Anyone can decode Base64; it offers no secrecy.</p>
+
+<div class="box">
+  <h4>How it works (intuitive)</h4>
+  <p>Computers store data in bytes (8 bits). Base64 groups the bit stream into chunks of 6 bits (because 2⁶=64), maps each chunk to a character from the Base64 alphabet, and uses <code>=</code> as padding when the input length isn’t a multiple of 3 bytes.</p>
+</div>
+
+<div class="box">
+  <h4>Examples</h4>
+  <div class="mono">
+    "Hi" → SGk=<br>
+    "Hello" → SGVsbG8=
+  </div>
+  <p>The trailing <code>=</code> signs are padding so the chunks line up.</p>
+</div>
+
+<p>Historically, Base64 came from the need to transmit binary attachments over text-only systems (like early email). Today it’s everywhere: embedding small images as data URLs, transporting tokens, or safely including bytes in configuration files.</p>
+
+<div class="box">
+  <h4>Try it</h4>
+  <p>Encode a sentence to Base64, then decode it back—notice how spaces and punctuation become part of the encoded stream and reappear perfectly when decoded.</p>
+</div>
+`
+  }
+};
+
+function updateInfo(){
+  const c = cipherSel.value;
+  if(INFO[c]){
+    cipherInfo.innerHTML = `<h3>${INFO[c].title}</h3>${INFO[c].body}`;
+  }
+}
+cipherSel.addEventListener("change", ()=>{ updateControls(); updateInfo(); });
+updateInfo();
+</script>
+</body>
+</html>

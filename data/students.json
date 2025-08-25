@@ -1,0 +1,12 @@
+[
+  {
+    "id": "teacher",
+    "name": "The Teacher",
+    "grade": "",
+    "featured": true,
+    "tags": ["Web", "Game", "App", "Cybersecurity", "Hardware"],
+    "projects": [
+      { "title": "Coding/Encoding Page", "type": "Web", "url": "/students/TheTeacher/CodingEncoding/index.html", "note": "A site to practice/learning various coding and encoding" }
+    ]
+  }
+]
