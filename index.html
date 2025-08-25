@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Class Projects Gallery</title>
+<link rel="stylesheet" href="common/css/site.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Class Projects Gallery</h1>
+        <div class="sub">Websites · Games · Apps · Cybersecurity · Hardware/IoT</div>
+      </div>
+      <div class="controls">
+        <input class="input" id="q" placeholder="Search student or project…" />
+        <select class="select" id="grade">
+          <option value="">All Grades</option>
+          <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+        </select>
+        <div class="chips" id="chips">
+          <div class="chip" data-tag="Web">Web</div>
+          <div class="chip" data-tag="Game">Game</div>
+          <div class="chip" data-tag="App">App</div>
+          <div class="chip" data-tag="Cybersecurity">Cybersecurity</div>
+          <div class="chip" data-tag="Hardware">Hardware</div>
+          <div class="chip" data-tag="Featured">Featured</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid" id="grid"></section>
+    <div class="empty" id="empty" style="display:none">No matches. Try clearing filters.</div>
+
+    <footer>
+      <!-- <div>Tip: Click a student tile to view their projects.</div>
+    <div>Teacher: add students by editing <code>data/students.json</code>.</div> -->
+    </footer>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Student Projects</div>
+      <button class="close" id="closeBtn">Close</button>
+    </div>
+    <div class="modal-body">
+      <div class="proj-wrap" id="projWrap"></div>
+    </div>
+  </dialog>
+
+<script src="common/js/site.js" defer></script>
+</body>
+</html>
